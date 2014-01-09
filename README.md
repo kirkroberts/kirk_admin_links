@@ -2,11 +2,25 @@
 
 Provides a floating widget on the front-end site with direct links to edit the current page, regions, and apps. The widget is only visible if the viewer is logged into Perch.
 
+The app currently does not show anything in the Perch admin panel, just the widget on the front end.
+
+As of version 0.7 the app uses PerchLang for translation and attempts to use Perch app lang files where possible.
+
+## Requirements
+
+- Perch 2.x with the standard Content app
+
+## License & Disclaimers
+
+- Use and abuse this at your own risk.
+- This app taps directly into Perch's Content app using non-API functions, so an upgrade of Perch core may break this app's functionality.
+- The code. I know. If you can improve it please do.
+
 ## Installation
 
-1. Add kirk_admin_links folder to your /perch/addons/apps folder.
-2. Include the runtime.php in your /perch/config/apps.php file.
-3. Use the kirk_admin_links() function call anywhere in the <body> of your site (preferably in an include or perch_layout so you can maintain it in one spot)
+1. Add the kirk_admin_links folder to your /perch/addons/apps folder.
+2. Include the runtime.php in your /perch/config/apps.php file: `include(PERCH_PATH.'/addons/apps/kirk_admin_links/runtime.php');`
+3. Use the `kirk_admin_links()` PHP function call anywhere in the <body> of your site (preferably in an include or perch_layout so you can maintain it in one spot)
 4. Optionally add options as detailed below (options should be optional, yes?)
 
 ## Options
@@ -23,7 +37,7 @@ For apps we need to know:
 
 1. the page the app detail appears on (e.g. a blog post)
 2. the handle of the app
-3. the query variable used to pass in the identifying slug (e.g. the postSlug value)
+3. the query variable used to pass in the identifying slug, e.g. "s" from ?s=post_slug
 
 So, like this:
 ```php
@@ -51,6 +65,15 @@ kirk_admin_links(array(
 ```
 
 ## Change Log
+
+### Version 0.7
+
+- Added Gallery support
+- Added individual Gallery album support
+- Added Lang folder and en-gb.txt file
+- Added Lang support that draws from Perch apps where possible
+- Made the widget fade out when not hovered over
+- Minor fixes and style updates
 
 ### Version 0.6
 

@@ -2,13 +2,13 @@
 
 /*
 
-Version: 0.6
+Version: 0.7
 Author: Kirk Roberts
 
 */
 
-// admin links
 // need to do this immediately to avoid a PHP session warning later
+// this feels wrong, but it works for now
 $Users = new PerchUsers;
 $kirkAdminLinksCurrentUser = $Users->get_current_user();
 
@@ -18,12 +18,15 @@ function kirk_admin_links($opts = array()) {
 	global $kirkAdminLinksCurrentUser;
 
 	$CurrentUser = $kirkAdminLinksCurrentUser;
-	$kirkAdminLinks = '';
-	$links = '';
-	$appLinks = '';
 
 	// is the user logged in?
 	if (is_object($CurrentUser) && $CurrentUser->logged_in()) {
+
+		$links = '';
+		$appLinks = '';
+
+		$API  = new PerchAPI(1.0, 'kirk_admin_links');
+		$Lang = $API->get('Lang');
 
 		$Pages = new PerchContent_Pages;
 		$pagePath = $_SERVER['PHP_SELF'];
@@ -47,7 +50,26 @@ function kirk_admin_links($opts = array()) {
       				$title = perch_blog_post_field($query, 'postTitle', true);
 
       				if ($id) {
-	        			$links .= '<div><a class="block" href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_blog/edit/?id=' . $id . '">Edit Post: &ldquo;' . $title . '&rdquo;</a></div>';
+
+      					$BlogAPI  = new PerchAPI(1.0, 'perch_blog');
+								$BlogLang = $BlogAPI->get('Lang');
+
+	        			$links .= '<div><a class="block" href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_blog/edit/?id=' . $id . '">' . $BlogLang->get('Edit Post') . ': &ldquo;' . $title . '&rdquo;</a></div>';
+      				}
+      				break;
+
+      			// gallery
+      			case 'perch_gallery':
+
+      				$id = perch_gallery_album_field($query, 'albumID', true);
+      				$title = perch_gallery_album_field($query, 'albumTitle', true);
+
+      				if ($id) {
+
+      					$GalleryAPI  = new PerchAPI(1.0, 'perch_gallery');
+								$GalleryLang = $GalleryAPI->get('Lang');
+
+	        			$links .= '<div><a class="block" href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_gallery/edit/?id=' . $id . '">' . $GalleryLang->get('Edit Album') . ': &ldquo;' . $title . '&rdquo;</a></div>';
       				}
       				break;
 
@@ -66,11 +88,16 @@ function kirk_admin_links($opts = array()) {
 
 			if ($pageID) {
 
-				$pageRegions = $Regions->get_for_page($pageID, false); // include_shared
+				$pageRegions = $Regions->get_for_page($pageID, false);
 				
+				if (!empty($links)) $links .= '<hr>';
+
 				// edit page / regions (content app)
-				$links .= '<div><a class="block" href="'.PerchUtil::html(PERCH_LOGINPATH).'/core/apps/content/page/?id=' . $pageID . '">Edit the &ldquo;' . $page->pageTitle() . '&rdquo; page</a></div>';
-				$links .= '<hr>';
+				$title = $page->pageTitle();
+				$links .= '<div><a class="block" href="'.PerchUtil::html(PERCH_LOGINPATH).'/core/apps/content/page/?id=' . $pageID . '">' . $Lang->get('Edit the &ldquo;%s&rdquo; page', $title) . '</a></div>';
+				
+				if (!empty($links)) $links .= '<hr>';
+
 				$count = 0;
 				if (PerchUtil::count($pageRegions)) {
 
@@ -81,7 +108,7 @@ function kirk_admin_links($opts = array()) {
 							$regionKey = PerchUtil::html($Region->regionKey());
 
 							// add region to list
-			        $links .= '<div><a href="' . $regionURL . '" class="edit">' . $regionKey . '</a>';
+			        $links .= '<div><a href="' . $regionURL . '" class="block">' . $regionKey . '</a>';
 			        
 			        // is it a multiple item region?
 			        if ($Region->regionMultiple()) {
@@ -116,13 +143,13 @@ function kirk_admin_links($opts = array()) {
 					        		$itemID = $item[0]['_id'];
 					        		$title = $item[0]['_title'];
 					        		if (empty($title)) {
-					        			$title = 'this item';
+					        			$title = $Lang->get('this item');
 					        		} else {
 					        			$title = '&ldquo;' . $title . '&rdquo;';
 					        		}
 					        		if ($itemID) {
 					        			$itemURL = $regionURL . '&itm=' . $itemID;
-					        			$links .= '<br> &gt; <a href="' . $itemURL . '"> Edit ' . $title . '</a>';
+					        			$links .= '<br> &gt; <a href="' . $itemURL . '"> ' . $Lang->get('Edit') . ' ' . $title . '</a>';
 					        		}
 
 						        	break; // exit key search
@@ -135,15 +162,9 @@ function kirk_admin_links($opts = array()) {
 			        // close region entry
 			        $links .= '</div>';
 
-			        // keep track of how many regions we're actually outputting
-			        // ++$count;
-
 			      } // end if: can edit
 					} // end foreach: regions
 				} // end if: $pageRegions count
-
-				// no regions
-				// if ($count == 0) $links .= '<div>( there are no editable regions )</div>';
 
 			} // end if: $pageID
 		} // end if: $page
@@ -161,22 +182,51 @@ function kirk_admin_links($opts = array()) {
 					$regionKey = PerchUtil::html($Region->regionKey());
 
 					// add region to list
-	        $sharedRegionLinks .= '<div><a href="' . $regionURL . '" class="edit">' . $regionKey . '</a>';
+	        $sharedRegionLinks .= '<div><a href="' . $regionURL . '" class="block">' . $regionKey . '</a></div>';
 	      }
 	    }
-	    if (!empty($sharedRegionLinks)) $links .= '<hr>' . $sharedRegionLinks;
+	    if (!empty($sharedRegionLinks)) {
+
+	    	if (!empty($links)) $links .= '<hr>';
+	    	$links .= $sharedRegionLinks;
+
+	    }
 	  }
 
 
-		// Events check
-		if (class_exists('PerchEvents_Events')) {
-			$appLinks .= '<div><a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_events/">Events List</a> &nbsp&gt;&nbsp; <a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_events/edit/">Add Event</a></div>';
-		}
-
 		// Blog check
 		if (class_exists('PerchBlog_Posts')) {
-			$appLinks .= '<div><a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_blog/">Blog Posts</a> &nbsp&gt;&nbsp; <a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_blog/edit/">Add Post</a></div>';
+
+			if (empty($BlogLang)) {
+				$BlogAPI  = new PerchAPI(1.0, 'perch_blog');
+				$BlogLang = $BlogAPI->get('Lang');
+			}
+
+			$appLinks .= '<div><a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_blog/">' . $BlogLang->get('Blog') . '</a> &nbsp&gt;&nbsp; <a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_blog/edit/">' . $BlogLang->get('Add Post') . '</a></div>';
 		}
+
+		// Gallery check
+		if (class_exists('PerchGallery_Albums')) {
+
+			if (empty($GalleryLang)) {
+				$GalleryAPI  = new PerchAPI(1.0, 'perch_gallery');
+				$GalleryLang = $GalleryAPI->get('Lang');
+			}
+
+			$appLinks .= '<div><a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_gallery/">' . $GalleryLang->get('Gallery') . '</a> &nbsp&gt;&nbsp; <a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_gallery/edit/">' . $GalleryLang->get('New Album') . '</a></div>';
+		}
+
+		// Events check
+		if (class_exists('PerchEvents_Events')) {
+
+			if (empty($EventsLang)) {
+				$EventsAPI  = new PerchAPI(1.0, 'perch_events');
+				$EventsLang = $EventsAPI->get('Lang');
+			}
+
+			$appLinks .= '<div><a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_events/">' . $EventsLang->get('Events') . '</a> &nbsp&gt;&nbsp; <a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_events/edit/">' . $EventsLang->get('New Event') . '</a></div>';
+		}
+
 		if ($appLinks) {
 			$links .= '<hr>' . $appLinks;
 		}
@@ -184,8 +234,7 @@ function kirk_admin_links($opts = array()) {
 		// if links, show them
 		if ($links) {
 			
-			$kirkAdminLinks = '<div id="kirk-admin-links">' . $links . '</div>';
-			echo $kirkAdminLinks;
+			echo '<div id="kirk-admin-links">' . $links . '</div>';
 
 		}
 
@@ -200,12 +249,17 @@ function kirk_admin_links($opts = array()) {
 			bottom: 20px;
 			box-shadow: 0 5px 15px #999;
 			color: #999;
+			cursor: default;
 			font: 14px/18px arial,sans-serif;
 			width: 200px;
 			padding: 16px 18px 18px;
 			position: fixed;
 			right: 20px;
 			z-index: 9999;
+			opacity: 0.3;
+		}
+		#kirk-admin-links:hover {
+			opacity: 1;
 		}
 		#kirk-admin-links > div {
 			margin: 0 0 4px;
@@ -226,6 +280,14 @@ function kirk_admin_links($opts = array()) {
 			height: 0;
 			padding: 0;
 			margin: 8px 0 8px;
+		}
+		#kirk-admin-links,
+		#kirk-admin-links a {
+			-webkit-transition: all .3s;
+			-moz-transition: all .3s;
+			-ms-transition: all .3s;
+			-o-transition: all .3s;
+			transition: all .3s;
 		}
 	</style>
 
