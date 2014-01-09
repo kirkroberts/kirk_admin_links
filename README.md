@@ -27,7 +27,7 @@ As of version 0.7 the app uses PerchLang for translation and attempts to use Per
 
 ## Options
 
-It's possible to get direct links to items in "multiple item" regions as well as posts in the Blog app (I may eventually add more). You can add as many multiples as you want or need.
+It's possible to get direct links to items in "multiple item" regions as well as entries in the Blog and Gallery apps (I may eventually add more). You can add as many multiples as you want or need.
 
 To get an item out of a multiple-item region we need to know:
 
@@ -60,6 +60,11 @@ kirk_admin_links(array(
 		array(
 			'page' => '/your_blog_post_page_path.php',
 			'app' => 'perch_blog',
+			'query-var' => 's'
+		),
+		array(
+			'page' => '/your_gallery_album_page_path.php',
+			'app' => 'perch_gallery',
 			'query-var' => 's'
 		)
 	)
