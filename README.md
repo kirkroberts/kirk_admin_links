@@ -2,6 +2,8 @@
 
 Provides a floating widget on the front-end site with direct links to edit the current page, regions, and apps. The widget is only visible if the viewer is logged into Perch.
 
+With this app installed it's possible to "round trip" between the public site and Admin panel in one browser tab using the URL link back to the page in the Perch sidebar (not the View Page link added in Perch 2.4, which opens a new tab). No more "two tab tango" or page reloading to check your edits.
+
 The app currently does not show anything in the Perch admin panel, just the widget on the front end.
 
 As of version 0.7 the app uses PerchLang for translation and attempts to use Perch app lang files where possible.
