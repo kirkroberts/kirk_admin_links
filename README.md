@@ -54,37 +54,37 @@ kirk_admin_links(array(
 
 ### Version 0.6
 
-BREAKING CHANGE: Changed variable inputs to use hyphens rather than underscores (more like other Perch var inputs)... I need to stop changing these things
-Added multiple item region item title to edit link
-Minor style edits
+- BREAKING CHANGE: Changed variable inputs to use hyphens rather than underscores (more like other Perch var inputs)... I need to stop changing these things
+- Added multiple item region item title to edit link
+- Minor style edits
 
 ### Version 0.5
 
-Added shared regions
+- Added shared regions
 
 ### Version 0.4
 
-Added 'apps' to options
-Added individual blog post editing
-BREAKING CHANGE: Changed variable inputs to be more Perch-like (I think)
-Added page name to "edit" link
+- Added 'apps' to options
+- Added individual blog post editing
+- BREAKING CHANGE: Changed variable inputs to be more Perch-like (I think)
+- Added page name to "edit" link
 
 ### Version 0.3
 
-Made link/hover color styles !important
-Made $opts optional in kirk_admin_links
-Added checks to remove PHP notices/warnings
-Added support for Events app
-Added support for Blog app
+- Made link/hover color styles !important
+- Made $opts optional in kirk_admin_links
+- Added checks to remove PHP notices/warnings
+- Added support for Events app
+- Added support for Blog app
 
 ### Version 0.2.1
 
-Uses perch_content_custom to find a specific item in multiple item regions instead of looping through all items. Should be more efficient with large sets of data.
+- Uses perch_content_custom to find a specific item in multiple item regions instead of looping through all items. Should be more efficient with large sets of data.
 
 ### Version 0.2
 
-Added support for editing items in multiple item regions
+- Added support for editing items in multiple item regions
 
 ### Version 0.1
 
-Initial version
+- Initial version
