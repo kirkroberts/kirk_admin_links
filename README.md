@@ -1,10 +1,12 @@
 # Kirk Admin Links
 
-Provides a floating widget on the front-end site with direct links to edit the current page, regions, and apps. The widget is only visible if the viewer is logged into Perch.
+Provides a floating widget on the front-end site with direct links to edit the current page, regions, and apps. The widget is only visible if the viewer is logged into Perch and has User Role privileges to edit something on the current page.
+
+You may find it easier to locate the page, post, event, etc using your site's navigation, or maybe you're just browsing the site and notice a typo. If you're already logged in you can go directly to the region editing screen with a single click.
 
 With this app installed it's possible to "round trip" between the public site and Admin panel in one browser tab using the URL link back to the page in the Perch sidebar (not the View Page link added in Perch 2.4, which opens a new tab). No more "two tab tango" or page reloading to check your edits.
 
-The app currently does not show anything in the Perch admin panel, just the widget on the front end.
+The app currently does not show anything in the Perch admin panel, just the widget on the front end. All configuration is done through options in the function call.
 
 As of version 0.7 the app uses PerchLang for translation and attempts to use Perch app lang files where possible.
 
@@ -14,9 +16,9 @@ As of version 0.7 the app uses PerchLang for translation and attempts to use Per
 
 ## License & Disclaimers
 
-- Use and abuse this at your own risk.
+- Use and abuse this at your own risk. 
 - This app taps directly into Perch's Content app using non-API functions, so an upgrade of Perch core may break this app's functionality.
-- The code. I know. If you can improve it please do.
+- The code. I know. If you can improve it please do and share it back.
 
 ## Installation
 
@@ -27,7 +29,7 @@ As of version 0.7 the app uses PerchLang for translation and attempts to use Per
 
 ## Options
 
-It's possible to get direct links to items in "multiple item" regions as well as entries in the Blog and Gallery apps (I may eventually add more). You can add as many multiples as you want or need.
+It's possible to get direct links to items in "multiple item" regions as well as entries in the Blog, Gallery, and Events apps. You can add as many multiples as you want or need.
 
 To get an item out of a multiple-item region we need to know:
 
@@ -70,8 +72,18 @@ kirk_admin_links(array(
 	)
 ));
 ```
+Two entries are shown for 'multiples' and 'apps' but you might use none or any number needed.
+
+**Note that there are no defaults.** All attributes must be entered for it to work. These are just sample attributes.
 
 ## Change Log
+
+### Version 0.8
+
+- Added individual Event item support
+- Added privilege/permissions checks for apps
+- Removed loop breaks in case the same regionKey is used twice
+- Fixed a condition where two dividers would show with nothing in-between
 
 ### Version 0.7
 

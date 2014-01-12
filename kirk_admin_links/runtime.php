@@ -2,7 +2,7 @@
 
 /*
 
-Version: 0.7
+Version: 0.8
 Author: Kirk Roberts
 
 */
@@ -46,35 +46,61 @@ function kirk_admin_links($opts = array()) {
 
       			// blog
       			case 'perch_blog':
-      				$id = perch_blog_post_field($query, 'postID', true);
-      				$title = perch_blog_post_field($query, 'postTitle', true);
 
-      				if ($id) {
+      				if ($CurrentUser->has_priv('perch_blog')) {
+	      				$id = perch_blog_post_field($query, 'postID', true);
+	      				$title = perch_blog_post_field($query, 'postTitle', true);
 
-      					$BlogAPI  = new PerchAPI(1.0, 'perch_blog');
-								$BlogLang = $BlogAPI->get('Lang');
+	      				if ($id) {
 
-	        			$links .= '<div><a class="block" href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_blog/edit/?id=' . $id . '">' . $BlogLang->get('Edit Post') . ': &ldquo;' . $title . '&rdquo;</a></div>';
-      				}
+	      					$BlogAPI  = new PerchAPI(1.0, 'perch_blog');
+									$BlogLang = $BlogAPI->get('Lang');
+
+		        			$links .= '<div><a class="block" href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_blog/edit/?id=' . $id . '">' . $BlogLang->get('Edit Post') . ': &ldquo;' . $title . '&rdquo;</a></div>';
+	      				}
+	      			}
       				break;
 
       			// gallery
       			case 'perch_gallery':
 
-      				$id = perch_gallery_album_field($query, 'albumID', true);
-      				$title = perch_gallery_album_field($query, 'albumTitle', true);
+      				if ($CurrentUser->has_priv('perch_gallery')) {
+	      				$id = perch_gallery_album_field($query, 'albumID', true);
+	      				$title = perch_gallery_album_field($query, 'albumTitle', true);
 
-      				if ($id) {
+	      				if ($id) {
 
-      					$GalleryAPI  = new PerchAPI(1.0, 'perch_gallery');
-								$GalleryLang = $GalleryAPI->get('Lang');
+	      					$GalleryAPI  = new PerchAPI(1.0, 'perch_gallery');
+									$GalleryLang = $GalleryAPI->get('Lang');
 
-	        			$links .= '<div><a class="block" href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_gallery/edit/?id=' . $id . '">' . $GalleryLang->get('Edit Album') . ': &ldquo;' . $title . '&rdquo;</a></div>';
-      				}
+		        			$links .= '<div><a class="block" href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_gallery/edit/?id=' . $id . '">' . $GalleryLang->get('Edit Album') . ': &ldquo;' . $title . '&rdquo;</a></div>';
+	      				}
+	      			}
+      				break;
+
+      			case 'perch_events':
+
+      				if ($CurrentUser->has_priv('perch_events')) {
+	      				$event = perch_events_custom(array(
+	      					'filter'=>'eventSlug',
+							    'match'=>'eq',
+							    'value'=>$query,
+							    'skip-template'=>true
+							    ));
+	      				$id = $event[0]['eventID'];
+	      				$title = $event[0]['eventTitle'];
+
+	      				if ($id) {
+
+	      					$EventsAPI  = new PerchAPI(1.0, 'perch_events');
+									$EventsLang = $EventsAPI->get('Lang');
+
+		        			$links .= '<div><a class="block" href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_events/edit/?id=' . $id . '">' . $EventsLang->get('Edit Event') . ': &ldquo;' . $title . '&rdquo;</a></div>';
+	      				}
+	      			}
       				break;
 
       		}
-      		break; // break out of loop
         }
       }
 		}
@@ -95,10 +121,9 @@ function kirk_admin_links($opts = array()) {
 				// edit page / regions (content app)
 				$title = $page->pageTitle();
 				$links .= '<div><a class="block" href="'.PerchUtil::html(PERCH_LOGINPATH).'/core/apps/content/page/?id=' . $pageID . '">' . $Lang->get('Edit the &ldquo;%s&rdquo; page', $title) . '</a></div>';
-				
-				if (!empty($links)) $links .= '<hr>';
 
 				$count = 0;
+				$pageRegionLinks = '';
 				if (PerchUtil::count($pageRegions)) {
 
 					foreach($pageRegions as $Region) {
@@ -108,7 +133,7 @@ function kirk_admin_links($opts = array()) {
 							$regionKey = PerchUtil::html($Region->regionKey());
 
 							// add region to list
-			        $links .= '<div><a href="' . $regionURL . '" class="block">' . $regionKey . '</a>';
+			        $pageRegionLinks .= '<div><a href="' . $regionURL . '" class="block">' . $regionKey . '</a>';
 			        
 			        // is it a multiple item region?
 			        if ($Region->regionMultiple()) {
@@ -149,22 +174,24 @@ function kirk_admin_links($opts = array()) {
 					        		}
 					        		if ($itemID) {
 					        			$itemURL = $regionURL . '&itm=' . $itemID;
-					        			$links .= '<br> &gt; <a href="' . $itemURL . '"> ' . $Lang->get('Edit') . ' ' . $title . '</a>';
+					        			$pageRegionLinks .= '<br> &gt; <a href="' . $itemURL . '"> ' . $Lang->get('Edit') . ' ' . $title . '</a>';
 					        		}
-
-						        	break; // exit key search
-
-						        }
+						        } // end if: key == regionKey
 					        } // end foreach: keys
 				        } // end if: keys exist
 			        } // end if: multiple
 			        
 			        // close region entry
-			        $links .= '</div>';
+			        $pageRegionLinks .= '</div>';
 
 			      } // end if: can edit
 					} // end foreach: regions
 				} // end if: $pageRegions count
+
+				if (!empty($pageRegionLinks)) {
+					if (!empty($links)) $links .= '<hr>';
+					$links .= $pageRegionLinks;
+				}
 
 			} // end if: $pageID
 		} // end if: $page
@@ -197,34 +224,55 @@ function kirk_admin_links($opts = array()) {
 		// Blog check
 		if (class_exists('PerchBlog_Posts')) {
 
-			if (empty($BlogLang)) {
-				$BlogAPI  = new PerchAPI(1.0, 'perch_blog');
-				$BlogLang = $BlogAPI->get('Lang');
+			if ($CurrentUser->has_priv('perch_blog')) {
+				if (empty($BlogLang)) {
+					$BlogAPI  = new PerchAPI(1.0, 'perch_blog');
+					$BlogLang = $BlogAPI->get('Lang');
+				}
+
+				$appLinks .= '<div><a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_blog/">' . $BlogLang->get('Blog') . '</a>';
+				if ($CurrentUser->has_priv('perch_blog.post.create')) {
+					$appLinks .= ' &nbsp&gt;&nbsp; <a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_blog/edit/">' . $BlogLang->get('Add Post') . '</a>';
+				}
+				$appLinks .= '</div>';
 			}
 
-			$appLinks .= '<div><a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_blog/">' . $BlogLang->get('Blog') . '</a> &nbsp&gt;&nbsp; <a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_blog/edit/">' . $BlogLang->get('Add Post') . '</a></div>';
 		}
 
 		// Gallery check
 		if (class_exists('PerchGallery_Albums')) {
 
-			if (empty($GalleryLang)) {
-				$GalleryAPI  = new PerchAPI(1.0, 'perch_gallery');
-				$GalleryLang = $GalleryAPI->get('Lang');
+			if ($CurrentUser->has_priv('perch_gallery')) {
+				if (empty($GalleryLang)) {
+					$GalleryAPI  = new PerchAPI(1.0, 'perch_gallery');
+					$GalleryLang = $GalleryAPI->get('Lang');
+				}
+
+				$appLinks .= '<div><a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_gallery/">' . $GalleryLang->get('Gallery') . '</a>';
+
+				if ($CurrentUser->has_priv('perch_gallery.album.create')) {
+					$appLinks .= ' &nbsp&gt;&nbsp; <a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_gallery/edit/">' . $GalleryLang->get('New Album') . '</a>';
+				}
+				$appLinks .= '</div>';
 			}
 
-			$appLinks .= '<div><a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_gallery/">' . $GalleryLang->get('Gallery') . '</a> &nbsp&gt;&nbsp; <a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_gallery/edit/">' . $GalleryLang->get('New Album') . '</a></div>';
 		}
 
 		// Events check
 		if (class_exists('PerchEvents_Events')) {
 
-			if (empty($EventsLang)) {
-				$EventsAPI  = new PerchAPI(1.0, 'perch_events');
-				$EventsLang = $EventsAPI->get('Lang');
-			}
+			if ($CurrentUser->has_priv('perch_events')) {
+				if (empty($EventsLang)) {
+					$EventsAPI  = new PerchAPI(1.0, 'perch_events');
+					$EventsLang = $EventsAPI->get('Lang');
+				}
 
-			$appLinks .= '<div><a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_events/">' . $EventsLang->get('Events') . '</a> &nbsp&gt;&nbsp; <a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_events/edit/">' . $EventsLang->get('New Event') . '</a></div>';
+				$appLinks .= '<div><a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_events/">' . $EventsLang->get('Events') . '</a>';
+
+				$appLinks .= ' &nbsp&gt;&nbsp; <a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_events/edit/">' . $EventsLang->get('New Event') . '</a>';
+
+				$appLinks .= '</div>';
+			}
 		}
 
 		if ($appLinks) {
