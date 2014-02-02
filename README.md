@@ -1,23 +1,30 @@
 # Kirk Admin Links
 
-Provides a floating widget on the front-end site with direct links to edit the current page, regions, and apps. The widget is only visible if the viewer is logged into Perch and has User Role privileges to edit something on the current page.
+## What It Does
 
-You may find it easier to locate the page, post, event, etc using your site's navigation, or maybe you're just browsing the site and notice a typo. If you're already logged in you can go directly to the region editing screen with a single click.
+Provides a floating palette on the front-end site with direct links to edit the current page, regions, and apps. Be default direct links are shown to edit the current page, each of the current page's regions, all shared regions, and entry lists and "add new item" for many of Perch's first-party apps. With a tiny bit of configuration (see Options) direct links can be made to edit the currently viewed multiple item region detail (think list/detail approaches) or individual items in many of Perch's first-party apps (e.g. a Blog post or Gallery album).
 
-With this app installed it's possible to "round trip" between the public site and Admin panel in one browser tab using the URL link back to the page in the Perch sidebar (not the View Page link added in Perch 2.4, which opens a new tab). No more "two tab tango" or page reloading to check your edits.
+The palette is only visible if the viewer is logged into Perch and has User Role privileges to edit something on the current page. The app currently does not show anything in the Perch admin panel, just the palette on the front end. All configuration is done through options in the function call.
 
-The app currently does not show anything in the Perch admin panel, just the widget on the front end. All configuration is done through options in the function call.
+Perch 2.4 added the control-E shortcut to edit the current page. This is essentially that made visible and with a lot of extra details.
 
 As of version 0.7 the app uses PerchLang for translation and attempts to use Perch app lang files where possible.
+
+## Why It Helps
+
+You may find it easier to locate the page, post, event, etc using your site's navigation, or maybe you're just browsing the site and notice a typo. If you're already logged in you can go directly to the region editing screen with a single click. This is 
+
+With this app installed it's possible to "round trip" between the public site and Admin panel in one browser tab using the URL link back to the page in the Perch sidebar (not the View Page link added in Perch 2.4, which opens a new tab). No more "two tab tango" or page reloading to check your edits.
 
 ## Requirements
 
 - Perch 2.x with the standard Content app
+- For best results it's recommended to have the latest version of Perch and all first-party apps (e.g. Blog)
 
 ## License & Disclaimers
 
 - Use and abuse this at your own risk. 
-- This app taps directly into Perch's Content app using non-API functions, so an upgrade of Perch core may break this app's functionality.
+- This app taps directly into Perch's Content app using non-API functions, so an upgrade of Perch core may break this app's functionality. This may cause a logged-in user to get error messages or warnings on the public site. If this happens, just comment out the kirk_admin_links call and let me know what's happening.
 - The code. I know. If you can improve it please do and share it back.
 
 ## Installation
@@ -29,54 +36,88 @@ As of version 0.7 the app uses PerchLang for translation and attempts to use Per
 
 ## Options
 
-It's possible to get direct links to items in "multiple item" regions as well as entries in the Blog, Gallery, and Events apps. You can add as many multiples as you want or need.
+It's possible to get direct links to items in "multiple item" regions as well as entries in the Blog, Gallery, Events, and Shop apps. You can add as many items to the 'pages' array as you want or need. Attributes are explained below.
 
-To get an item out of a multiple-item region we need to know:
+Just specify the URL of the page that contains the editable item
 
-1. the name of the region (the regionKey)
-2. the query variable, e.g. "s" from ?s=slug_name
-3. the field id of the slug to test against, e.g. "title_slug"
-
-For apps we need to know:
-
-1. the page the app detail appears on (e.g. a blog post)
-2. the handle of the app
-3. the query variable used to pass in the identifying slug, e.g. "s" from ?s=post_slug
-
-So, like this:
 ```php
 kirk_admin_links(array(
-	'multiples' => array(
+	'pages' => array(
 		array(
-			'region-name'=>'The Name of the Region',
-			'query-var'=>'s',
-			'slug-id'=>'slug_field_id'
-		),
-		array(
-			'region-name'=>'Another Region',
-			'query-var'=>'s',
-			'slug-id'=>'slug_field_id'
+			'page'=>'/index.php', // required (key)
+			'query-var'=> 's', // optional, defaults to 's'
+			'app'=>, // app handle, required for apps, e.g. 'perch_blog'
+			// below only needed for multiple item regions
+			'region-name'=> 'Region Name', // required for multiple item regions
+			'region-page'=> '/index.php', // optional, use for multiple item regions only if the region's page is different than the page we're on
+			'slug-id'=>'field_id', // optional, for multiple item regions only, the id of the slug field to test against, defaults to 'slug'
 		)
-	),
-	'apps' => array(
-		array(
-			'page' => '/your_blog_post_page_path.php',
-			'app' => 'perch_blog',
-			'query-var' => 's'
-		),
-		array(
-			'page' => '/your_gallery_album_page_path.php',
-			'app' => 'perch_gallery',
-			'query-var' => 's'
-		)
-	)
+	)	
 ));
 ```
-Two entries are shown for 'multiples' and 'apps' but you might use none or any number needed.
 
-**Note that there are no defaults.** All attributes must be entered for it to work. These are just sample attributes.
+If you're using the Blog app and a query variable of 's' (the default) then it might look like this:
+
+```php
+kirk_admin_links(array(
+	'pages' => array(
+		array(
+			'page'=>'/blog/post.php',
+			'app'=>'perch_blog'
+		)
+	)	
+));
+```
+
+Now you'd have a direct link from any Blog post to its corresponding edit screen in Perch.
+
+Or maybe you're also using Gallery and a multiple item region for a list/detail presentation, then it might be something like this:
+
+```php
+kirk_admin_links(array(
+	'pages' => array(
+		array(
+			'page'=>'/blog/post.php',
+			'app'=>'perch_blog'
+		),
+		array(
+			'page'=>'/gallery/album.php',
+			'app'=>'perch_gallery'
+		),
+		array(
+			'page'=>'/news/detail.php',
+			'region-name'=>'News',
+			'slug-id'=>'title_slug'
+		)
+	)	
+));
+```
 
 ## Change Log
+
+### Version 0.9
+
+- BREAKING CHANGE: combined "multiples" and "apps" option arrays into "pages" array; multiple item regions now require the 'region-name' attribute
+- Added 'region-page' attribute for regions that originate on a different page than they are displayed on
+- Added defaults for 'query-var' and 'slug-id'
+- Default text in link palette if nothing is editable
+- Perch Shop app integration
+
+### Version 0.8.3
+
+- Not sure what happened in this one...
+
+### Version 0.8.2
+
+- Updated palette styles
+
+### Version 0.8.2
+
+- Updated palette styles
+
+### Version 0.8.1
+
+- Changed Gallery check to use perch_gallery_album_details to accomodate older versions
 
 ### Version 0.8
 

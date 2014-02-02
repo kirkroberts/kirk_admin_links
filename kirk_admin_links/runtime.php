@@ -2,8 +2,24 @@
 
 /*
 
-Version: 0.8
+Version: 0.9
 Author: Kirk Roberts
+
+USAGE
+
+kirk_admin_links(array(
+	'pages' => array(
+		array(
+			'page'=>'/index.php', // required (key)
+			'query-var'=> 's', // optional, defaults to 's'
+			'app'=>, // required for apps, e.g. 'perch_shop'
+			// below only needed for multiple item regions
+			'region-name'=> 'Region Name', // required for multiple item regions
+			'region-page'=> '/index.php', // optional, use for multiple item regions only if the region's page is different than the page we're on
+			'slug-id'=>'field_id', // optional for multiple item regions, unnecessary for apps, defaults to 'slug'
+		)
+	)	
+));
 
 */
 
@@ -22,91 +38,176 @@ function kirk_admin_links($opts = array()) {
 	// is the user logged in?
 	if (is_object($CurrentUser) && $CurrentUser->logged_in()) {
 
-		$links = '';
-		$appLinks = '';
-
 		$API  = new PerchAPI(1.0, 'kirk_admin_links');
 		$Lang = $API->get('Lang');
 
-		$Pages = new PerchContent_Pages;
-		$pagePath = $_SERVER['PHP_SELF'];
-		$page = $Pages->find_by_path($pagePath);
-
-		// check for apps first
-		if (!empty($opts['apps']) && is_array($opts['apps'])) {
-			foreach ($opts['apps'] as $key) {
-        	
-        if ($key['page'] == $pagePath) {
-
-        	// found keys to do a match
-      		$queryVar = $key['query-var'];
-      		$query = perch_get($queryVar);
-
-      		switch ($key['app']) {
-
-      			// blog
-      			case 'perch_blog':
-
-      				if ($CurrentUser->has_priv('perch_blog')) {
-	      				$id = perch_blog_post_field($query, 'postID', true);
-	      				$title = perch_blog_post_field($query, 'postTitle', true);
-
-	      				if ($id) {
-
-	      					$BlogAPI  = new PerchAPI(1.0, 'perch_blog');
-									$BlogLang = $BlogAPI->get('Lang');
-
-		        			$links .= '<div><a class="block" href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_blog/edit/?id=' . $id . '">' . $BlogLang->get('Edit Post') . ': &ldquo;' . $title . '&rdquo;</a></div>';
-	      				}
-	      			}
-      				break;
-
-      			// gallery
-      			case 'perch_gallery':
-
-      				if ($CurrentUser->has_priv('perch_gallery')) {
-	      				$id = perch_gallery_album_field($query, 'albumID', true);
-	      				$title = perch_gallery_album_field($query, 'albumTitle', true);
-
-	      				if ($id) {
-
-	      					$GalleryAPI  = new PerchAPI(1.0, 'perch_gallery');
-									$GalleryLang = $GalleryAPI->get('Lang');
-
-		        			$links .= '<div><a class="block" href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_gallery/edit/?id=' . $id . '">' . $GalleryLang->get('Edit Album') . ': &ldquo;' . $title . '&rdquo;</a></div>';
-	      				}
-	      			}
-      				break;
-
-      			case 'perch_events':
-
-      				if ($CurrentUser->has_priv('perch_events')) {
-	      				$event = perch_events_custom(array(
-	      					'filter'=>'eventSlug',
-							    'match'=>'eq',
-							    'value'=>$query,
-							    'skip-template'=>true
-							    ));
-	      				$id = $event[0]['eventID'];
-	      				$title = $event[0]['eventTitle'];
-
-	      				if ($id) {
-
-	      					$EventsAPI  = new PerchAPI(1.0, 'perch_events');
-									$EventsLang = $EventsAPI->get('Lang');
-
-		        			$links .= '<div><a class="block" href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_events/edit/?id=' . $id . '">' . $EventsLang->get('Edit Event') . ': &ldquo;' . $title . '&rdquo;</a></div>';
-	      				}
-	      			}
-      				break;
-
-      		}
-        }
-      }
-		}
-
+		// we're relying on these classes from the Content app
 		$Regions = new PerchContent_Regions;
 		$Items = new PerchContent_Items;
+		$Pages = new PerchContent_Pages;
+
+		$currentPagePath = $_SERVER['PHP_SELF'];
+		$page = $Pages->find_by_path($currentPagePath);
+
+		$links = '';
+		$appLinks = '';
+
+		// check for pages first
+		if (!empty($opts['pages']) && is_array($opts['pages'])) {
+
+			$tests = $opts['pages'];
+
+			foreach ($tests as $test) {
+
+				if ($test['page'] == $currentPagePath) {
+
+					$queryVar = !empty($test['query-var']) ? $test['query-var'] : 's';
+
+					$slug = perch_get($queryVar);
+
+					if (!empty($slug)) {
+
+						// check apps
+						if (!empty($test['app'])) {
+							switch ($test['app']) {
+
+		      			// blog
+		      			case 'perch_blog':
+
+		      				if ($CurrentUser->has_priv('perch_blog')) {
+			      				$id = '';
+			      				$id = perch_blog_post_field($slug, 'postID', true);
+			      				$title = perch_blog_post_field($slug, 'postTitle', true);
+
+			      				if (!empty($id)) {
+
+			      					$BlogAPI  = new PerchAPI(1.0, 'perch_blog');
+											$BlogLang = $BlogAPI->get('Lang');
+
+				        			$links .= '<div><a class="block" href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_blog/edit/?id=' . $id . '">' . $BlogLang->get('Edit Post') . ': &ldquo;' . $title . '&rdquo;</a></div>';
+			      				}
+			      			}
+		      				break;
+
+		      			// gallery
+		      			case 'perch_gallery':
+
+		      				if ($CurrentUser->has_priv('perch_gallery')) {
+			      				$id = '';
+			      				$album = perch_gallery_album_details($slug, array(
+			      					'skip-template' => true
+			      					));
+			      				if ($album) {
+			      					$id = $album['albumID'];
+			      					$title = $album['albumTitle'];
+			      				}
+			      				if (!empty($id)) {
+
+			      					$GalleryAPI  = new PerchAPI(1.0, 'perch_gallery');
+											$GalleryLang = $GalleryAPI->get('Lang');
+
+				        			$links .= '<div><a class="block" href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_gallery/edit/?id=' . $id . '">' . $GalleryLang->get('Edit Album') . ': &ldquo;' . $title . '&rdquo;</a></div>';
+			      				}
+			      			}
+		      				break;
+
+		      			case 'perch_events':
+
+		      				if ($CurrentUser->has_priv('perch_events')) {
+			      				$id = '';
+			      				$event = perch_events_custom(array(
+			      					'filter'=>'eventSlug',
+									    'match'=>'eq',
+									    'value'=>$slug,
+									    'skip-template'=>true
+									    ));
+			      				$id = $event[0]['eventID'];
+			      				$title = $event[0]['eventTitle'];
+
+			      				if (!empty($id)) {
+
+			      					$EventsAPI  = new PerchAPI(1.0, 'perch_events');
+											$EventsLang = $EventsAPI->get('Lang');
+
+				        			$links .= '<div><a class="block" href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_events/edit/?id=' . $id . '">' . $EventsLang->get('Edit Event') . ': &ldquo;' . $title . '&rdquo;</a></div>';
+			      				}
+			      			}
+		      				break;
+
+		      			case 'perch_shop':
+
+		      				if ($CurrentUser->has_priv('perch_shop')) {
+			      				$id = '';
+			      				$product = perch_shop_custom(array(
+			      					'filter'=>'productSlug',
+									    'match'=>'eq',
+									    'value'=>$slug,
+									    'skip-template'=>true
+									    ));
+			      				$id = $product[0]['productID'];
+			      				$title = $product[0]['productTitle'];
+
+			      				if (!empty($id)) {
+
+			      					$ShopAPI  = new PerchAPI(1.0, 'perch_shop');
+											$ShopLang = $ShopAPI->get('Lang');
+
+				        			$links .= '<div><a class="block" href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_shop/edit/?id=' . $id . '">' . $ShopLang->get('Edit Product') . ': &ldquo;' . $title . '&rdquo;</a></div>';
+			      				}
+			      			}
+		      				break;
+
+		      		}
+						}
+
+						// check Content
+						if (!empty($test['region-name'])) {
+
+							$regionKey = $test['region-name'];
+
+							$regionPagePath = !empty($test['region-page']) ? $test['region-page'] : $currentPagePath;
+
+							$slugID = !empty($test['slug-id']) ? $test['slug-id'] : 'slug';
+
+	        		// use perch_content_custom() to find the item
+	        		$item = perch_content_custom($regionKey, array(
+	        			'skip-template'=>true,
+	        			// 'raw' => false,
+	        			'page'	=> $regionPagePath,
+	        			'filter' => $slugID,
+	        			'match' => 'eq',
+	        			'value' => $slug
+	        		), true);
+
+	        		if (!empty($item)) {
+
+	        			$regionPage = $Pages->find_by_path($regionPagePath);
+	        			$regionPageID = $regionPage->pageID();
+								$Region = $Regions->find_for_page_by_key($regionPageID, $regionKey);
+								$regionURL = PerchUtil::html(PERCH_LOGINPATH).'/core/apps/content/edit/?id=' . PerchUtil::html($Region->id());
+
+		        		// get the id, make the link
+		        		$itemID = $item[0]['_id'];
+		        		$title = $item[0]['_title'];
+		        		if (empty($title)) {
+		        			$title = $Lang->get('this item');
+		        		} else {
+		        			$title = '&ldquo;' . $title . '&rdquo;';
+		        		}
+		        		if ($itemID) {
+		        			$itemURL = $regionURL . '&itm=' . $itemID;
+		        			$links .= '<div><a class="block" href="' . $itemURL . '"> ' . $Lang->get('Edit') . ' ' . $title . '</a></div>';
+		        		}
+	        		}
+
+						} // end check Content
+
+					}
+				}
+			}
+		}
+
+		// page regions
 
 		if ($page) {
 
@@ -135,52 +236,6 @@ function kirk_admin_links($opts = array()) {
 							// add region to list
 			        $pageRegionLinks .= '<div><a href="' . $regionURL . '" class="block">' . $regionKey . '</a>';
 			        
-			        // is it a multiple item region?
-			        if ($Region->regionMultiple()) {
-			        	
-			        	// let's see if we have keys to find the specific entry
-			        	if (!empty($opts['multiples']) && is_array($opts['multiples'])) {
-
-					        foreach ($opts['multiples'] as $key) {
-
-					        	if ($key['region-name'] == $regionKey) {
-						        	
-						        	// found keys to do a match
-					        		$queryVar = $key['query-var'];
-					        		$query = perch_get($queryVar);
-
-					        		// if no query with that handle, break out of loop
-					        		if (empty($query)) break;
-
-					        		$slugID = $key['slug-id'];
-
-					        		// use perch_content_custom() to find the item
-					        		$item = perch_content_custom($regionKey, array(
-					        			'skip-template'=>true,
-					        			// 'raw' => false,
-					        			'page'	=> $pagePath,
-					        			'filter' => $slugID,
-					        			'match' => 'eq',
-					        			'value' => $query
-					        		), true);
-
-					        		// get the id, make the link
-					        		$itemID = $item[0]['_id'];
-					        		$title = $item[0]['_title'];
-					        		if (empty($title)) {
-					        			$title = $Lang->get('this item');
-					        		} else {
-					        			$title = '&ldquo;' . $title . '&rdquo;';
-					        		}
-					        		if ($itemID) {
-					        			$itemURL = $regionURL . '&itm=' . $itemID;
-					        			$pageRegionLinks .= '<br> &gt; <a href="' . $itemURL . '"> ' . $Lang->get('Edit') . ' ' . $title . '</a>';
-					        		}
-						        } // end if: key == regionKey
-					        } // end foreach: keys
-				        } // end if: keys exist
-			        } // end if: multiple
-			        
 			        // close region entry
 			        $pageRegionLinks .= '</div>';
 
@@ -196,7 +251,9 @@ function kirk_admin_links($opts = array()) {
 			} // end if: $pageID
 		} // end if: $page
 
+
 		// shared regions
+		
 		$sharedRegions = $Regions->get_shared();
 
 		if (PerchUtil::count($sharedRegions)) {
@@ -275,14 +332,36 @@ function kirk_admin_links($opts = array()) {
 			}
 		}
 
+		// Shop check
+		if (class_exists('PerchShop_Products')) {
+
+			if ($CurrentUser->has_priv('perch_shop')) {
+				if (empty($ShopLang)) {
+					$ShopAPI  = new PerchAPI(1.0, 'perch_shop');
+					$ShopLang = $ShopAPI->get('Lang');
+				}
+
+				$appLinks .= '<div><a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_shop/">' . $ShopLang->get('Shop') . '</a>';
+
+				$appLinks .= ' &nbsp&gt;&nbsp; <a href="' . PerchUtil::html(PERCH_LOGINPATH).'/addons/apps/perch_shop/edit/">' . $ShopLang->get('Add Product') . '</a>';
+
+				$appLinks .= '</div>';
+			}
+		}
+
 		if ($appLinks) {
-			$links .= '<hr>' . $appLinks;
+			if (!empty($links)) $links .= '<hr>';
+			$links .= $appLinks;
 		}
 
 		// if links, show them
 		if ($links) {
 			
 			echo '<div id="kirk-admin-links">' . $links . '</div>';
+
+		} else {
+
+			echo '<div id="kirk-admin-links">Logged into Perch: no links</div>';
 
 		}
 
@@ -299,12 +378,14 @@ function kirk_admin_links($opts = array()) {
 			color: #999;
 			cursor: default;
 			font: 14px/18px arial,sans-serif;
-			width: 200px;
+			opacity: 0.3;
 			padding: 16px 18px 18px;
 			position: fixed;
 			right: 20px;
+			text-align: left;
+			text-transform: none;
+			width: 200px;
 			z-index: 9999;
-			opacity: 0.3;
 		}
 		#kirk-admin-links:hover {
 			opacity: 1;
@@ -314,10 +395,25 @@ function kirk_admin_links($opts = array()) {
 		}
 		#kirk-admin-links a {
 			color: #ddd !important;
+			display: inline;
+			font: 14px/18px arial,sans-serif;
+			padding: 0;
 			text-decoration: none;
+			text-transform: none;
 		}
 		#kirk-admin-links .block {
 			display: block;
+		}
+		#kirk-admin-links .inset {
+			display: block;
+			position: relative;
+			padding-left: 1em;
+		}
+		#kirk-admin-links .inset:before {
+			content: '> ';
+			position: absolute;
+			top: 0;
+			left: 0;
 		}
 		#kirk-admin-links a:hover {
 			color: #fff !important;
