@@ -2,7 +2,7 @@
 
 ## What It Does
 
-Provides a floating palette on the front-end site with direct links to edit the current page, regions, and apps. Be default direct links are shown to edit the current page, each of the current page's regions, all shared regions, and entry lists and "add new item" for many of Perch's first-party apps. With a tiny bit of configuration (see Options) direct links can be made to edit the currently viewed multiple item region detail (think list/detail approaches) or individual items in many of Perch's first-party apps (e.g. a Blog post or Gallery album).
+Provides a floating palette on the front-end site with direct links to edit the current page, regions, and apps. By default direct links are shown to edit the current page, each of the current page's regions, all shared regions, and entry lists and "add new item" for many of Perch's first-party apps. With a tiny bit of configuration (see Options) direct links can be made to edit the currently viewed multiple item region detail (think list/detail approaches) or individual items in many of Perch's first-party apps (e.g. a Blog post or Gallery album).
 
 The palette is only visible if the viewer is logged into Perch and has User Role privileges to edit something on the current page. The app currently does not show anything in the Perch admin panel, just the palette on the front end. All configuration is done through options in the function call.
 
@@ -12,7 +12,7 @@ As of version 0.7 the app uses PerchLang for translation and attempts to use Per
 
 ## Why It Helps
 
-You may find it easier to locate the page, post, event, etc using your site's navigation, or maybe you're just browsing the site and notice a typo. If you're already logged in you can go directly to the region editing screen with a single click. This is 
+You may find it easier to locate the page, post, event, etc using your site's navigation, or maybe you're just browsing the site and notice a typo. If you're already logged in you can go directly to the region editing screen with a single click. This significantly bridges the gap between the public-facing site and the editing experience.
 
 With this app installed it's possible to "round trip" between the public site and Admin panel in one browser tab using the URL link back to the page in the Perch sidebar (not the View Page link added in Perch 2.4, which opens a new tab). No more "two tab tango" or page reloading to check your edits.
 
@@ -46,7 +46,7 @@ kirk_admin_links(array(
 		array(
 			'page'=>'/index.php', // required (key)
 			'query-var'=> 's', // optional, defaults to 's'
-			'app'=>, // app handle, required for apps, e.g. 'perch_blog'
+			'app'=>'perch_blog', // app handle, required for apps (except Content app)
 			// below only needed for multiple item regions
 			'region-name'=> 'Region Name', // required for multiple item regions
 			'region-page'=> '/index.php', // optional, use for multiple item regions only if the region's page is different than the page we're on

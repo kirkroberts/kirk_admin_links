@@ -12,7 +12,7 @@ kirk_admin_links(array(
 		array(
 			'page'=>'/index.php', // required (key)
 			'query-var'=> 's', // optional, defaults to 's'
-			'app'=>, // required for apps, e.g. 'perch_shop'
+			'app'=>'perch_blog', // app handle, required for apps
 			// below only needed for multiple item regions
 			'region-name'=> 'Region Name', // required for multiple item regions
 			'region-page'=> '/index.php', // optional, use for multiple item regions only if the region's page is different than the page we're on
